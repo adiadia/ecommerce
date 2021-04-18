@@ -119,6 +119,7 @@ public class AdminController {
         productDTO.setWeight(product.getWeight());
         productDTO.setDescription(product.getDescription());
         productDTO.setCategoryId(product.getCategory().getId());
+        productDTO.setImageName(product.getImageName());
         model.addAttribute("productDTO",productDTO);
         model.addAttribute("categories",categoryService.getAllCategory());
         return "productsAdd";
