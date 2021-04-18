@@ -9,12 +9,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 @Controller
 public class AdminController {
 
+    public static String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/productImages";
     @Autowired
     private CategoryService categoryService;
 
@@ -74,7 +80,9 @@ public class AdminController {
     }
 
     @PostMapping("/admin/products/add")
-    public String addProductInDatabase(@ModelAttribute("productDTO") ProductDTO productDTO){
+    public String addProductInDatabase(@ModelAttribute("productDTO") ProductDTO productDTO,
+                                       @RequestParam("productImage")MultipartFile file,
+                                       @RequestParam("imgName") String imgName) throws IOException {
         Product product = new Product();
         product.setCategory(categoryService.getById(productDTO.getCategoryId()).get());
         product.setDescription(productDTO.getDescription());
@@ -82,6 +90,17 @@ public class AdminController {
         product.setPrice(productDTO.getPrice());
         product.setWeight(productDTO.getWeight());
         product.setName(productDTO.getName());
+        String imageUUID;
+        if(!file.isEmpty())
+        {
+            imageUUID = file.getOriginalFilename();
+            Path fileNameAndPath = Paths.get(uploadDir, imageUUID);
+            Files.write(fileNameAndPath, file.getBytes());
+        }
+        else {
+            imageUUID = imgName;
+        }
+        product.setImageName(imageUUID);
         productService.addProduct(product);
         return "redirect:/admin/products";
     }
@@ -103,5 +122,11 @@ public class AdminController {
         model.addAttribute("productDTO",productDTO);
         model.addAttribute("categories",categoryService.getAllCategory());
         return "productsAdd";
+    }
+
+    @GetMapping("/admin/product/delete/{id}")
+    public String deleteProduct(@PathVariable Long id){
+        productService.deleteProduct(id);
+        return "redirect:/admin/products";
     }
 }
